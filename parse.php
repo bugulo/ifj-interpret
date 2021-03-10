@@ -7,6 +7,14 @@ function error(string $data, int $code) {
     exit($code);
 }
 
+if(in_array("--help", $argv)) {
+    if(count($argv) != 2)
+        error("--help can not be combined with other parameters", 10);
+
+    echo "--help - List parser parameters\n";
+    exit(0);
+}
+
 // Non-terminals 
 const T_VAR = 1;
 const T_SYMB = 2;
@@ -97,7 +105,7 @@ while(!feof(STDIN)) {
 
     // If we didn't parse header yet, the next non-empty line has to be the header
     if(!$header) {
-        if($data[0] == ".IPPcode21") {
+        if(strtoupper($data[0]) == ".IPPCODE21") {
             $header = true;
             continue;
         } else 
@@ -158,6 +166,9 @@ while(!feof(STDIN)) {
     $instructions[] = $instruction;
 }
 
+if(!$header)
+    error("Missing header", 21);
+
 // Calculate statistics for parsed instructions
 foreach($instructions as $key => $data) {
     if(in_array($data["opcode"], ["JUMP", "JUMPIFEQ", "JUMPIFNEQ", "CALL"])) {
@@ -181,7 +192,7 @@ foreach($instructions as $key => $data) {
 }
 
 // Generate stat related files
-$current_file = NULL;
+/*$current_file = NULL;
 array_shift($argv);
 foreach($argv as $arg) {
     if(preg_match("/^--stats=(\S+)$/", $arg, $matches)) {
@@ -214,7 +225,7 @@ foreach($argv as $arg) {
     } else {
         error("Unknown command line argument", 10);
     }
-}
+}*/
 
 $document = new DOMDocument("1.0", "UTF-8");
 $document->formatOutput = true;
@@ -242,3 +253,4 @@ foreach($instructions as $key => $data) {
 }
 
 echo $document->saveXML();
+exit(0);

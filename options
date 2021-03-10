@@ -45,7 +45,7 @@ IgnoreValues = 0
 #EntireElement=SuperCoach_s>SuperCoach
 
 # Ignoring elements
-# You can specify a full name of an element including names of parents separated by ‘>’ (recommended)
+# You can specify a full name of an element including names of parents separated by ï¿½>ï¿½ (recommended)
 # or only the name of the element. 
 # Attention! The names of the elements are case sensitive
 #IgnoreElement = root>parent>element>sub-element

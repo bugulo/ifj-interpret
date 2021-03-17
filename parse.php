@@ -7,12 +7,39 @@ function error(string $data, int $code) {
     exit($code);
 }
 
-if(in_array("--help", $argv)) {
-    if(count($argv) != 2)
-        error("--help can not be combined with other parameters", 10);
-
-    echo "--help - List parser parameters\n";
+// Custom echo function, writes message to stdout and exists with return code 0
+function success(string $data) {
+    echo $data;
     exit(0);
+}
+
+// Statistics for parsed file
+$statistics = [
+    "files" => [],
+    "comments" => 0,
+    "labels" => 0,
+    "jumps" => [
+        "total" => 0,
+        "forward" => 0,
+        "backward" => 0,
+        "bad" => 0
+    ]
+];
+
+// Parse supported command line arguments
+array_shift($argv);
+foreach($argv as $arg) {
+    if($arg == "--help" && count($argv) == 1) {
+        success("--help - List parser parameters\n");
+    } else if(preg_match("/^--stats=(\S+)$/", $arg, $matches)) {
+        if(array_key_exists($matches[1], $statistics["files"]))
+            error("Multiple definitions of stats targeting the same file (${matches[1]})", 12);
+        
+        $statistics["files"][$matches[1]] = [];
+    } else if(count($statistics["files"]) > 0 && in_array($arg, ["--loc", "--comments", "--labels", "--jumps", "--fwjumps", "--backjumps", "--badjumps"])) {
+        $statistics["files"][array_key_last($statistics["files"])][] = $arg;
+    } else
+        error("Unknown argument ${arg} or invalid combination of arguments", 10);
 }
 
 // Non-terminals 
@@ -70,24 +97,15 @@ $instruction_set = [
     "BREAK"         => []
 ];
 
-// Statistics for parsed file
-$statistics = [
-    "comments" => 0,
-    "labels" => 0,
-    "jumps" => [
-        "total" => 0,
-        "forward" => 0,
-        "backward" => 0,
-        "bad" => 0
-    ]
-];
-
 // List of parsed instructions
 $instructions = [];
 
+// Was header found?
 $header = false;
 
+// Line index counter
 $current_line = 0;
+
 while(!feof(STDIN)) {
     $current_line++;
 
@@ -177,12 +195,12 @@ foreach($instructions as $key => $data) {
             if($target_data["opcode"] == "LABEL" && $target_data["args"][0]["value"] == $data["args"][0]["value"])
                 $found = $target_key;
         
-        if($found > $key)
-            $statistics["jumps"]["forward"]++;
+        if($found === NULL)
+            $statistics["jumps"]["bad"]++;
         else if($found < $key)
             $statistics["jumps"]["backward"]++;
-        else if($found == NULL)
-            $statistics["jumps"]["bad"]++;
+        else if($found > $key)
+            $statistics["jumps"]["forward"]++;
 
         $statistics["jumps"]["total"]++;
     } else if($data["opcode"] == "LABEL") {
@@ -192,40 +210,31 @@ foreach($instructions as $key => $data) {
 }
 
 // Generate stat related files
-/*$current_file = NULL;
-array_shift($argv);
-foreach($argv as $arg) {
-    if(preg_match("/^--stats=(\S+)$/", $arg, $matches)) {
-        if($matches[1] == $current_file)
-            error("Multiple definitions of stats targeting the same file (${matches[1]})", 12);
+foreach($statistics["files"] as $filename => $args) {
+    if(@file_put_contents($filename, "") === false)
+        error("Can't write into file ${filename}", 12);
 
-        $current_file = $matches[1];
-        if(file_put_contents($current_file, "") === false)
-            error("Can't write into file ${current_file}", 12);
-    } else if($current_file != NULL) {
+    foreach($args as $type) {
         $output = 0;
-
-        if($arg == "--loc")
+        if($type == "--loc")
             $output = count($instructions);
-        else if($arg == "--comments")
+        else if($type == "--comments")
             $output = $statistics["comments"];
-        else if($arg == "--labels")
+        else if($type == "--labels")
             $output = $statistics["labels"];
-        else if($arg == "--jumps")
+        else if($type == "--jumps")
             $output = $statistics["jumps"]["total"];
-        else if($arg == "--fwjumps")
+        else if($type == "--fwjumps")
             $output = $statistics["jumps"]["forward"];
-        else if($arg == "--backjumps")
+        else if($type == "--backjumps")
             $output = $statistics["jumps"]["backward"];
-        else if($arg == "--badjumps")
+        else if($type == "--badjumps")
             $output = $statistics["jumps"]["bad"];
 
-        if(file_put_contents($current_file, $output . "\n", FILE_APPEND) === false)
-            error("Can't write into file ${current_file}", 12);
-    } else {
-        error("Unknown command line argument", 10);
+        if(@file_put_contents($filename, $output . "\n", FILE_APPEND) === false)
+            error("Can't write into file ${filename}", 12);
     }
-}*/
+}
 
 $document = new DOMDocument("1.0", "UTF-8");
 $document->formatOutput = true;
@@ -252,5 +261,4 @@ foreach($instructions as $key => $data) {
     $program->appendChild($instruction);
 }
 
-echo $document->saveXML();
-exit(0);
+success($document->saveXML());

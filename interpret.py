@@ -164,10 +164,6 @@ if file_source and not os.path.isfile(file_source):
 if file_input and not os.path.isfile(file_input):
     throw_error(f"File '{file_input}' does not exist", 11)
 
-# Redirect input file to stdin if provided
-if file_input:
-    sys.stdin = open(file_input, "r")
-
 # Parse input source file and check if it is well-formed
 try:
     file_parsed = ElementTree.parse(file_source if file_source else sys.stdin)
@@ -177,6 +173,10 @@ except:
 root = file_parsed.getroot()
 if root.tag != "program" or "language" not in root.attrib or root.attrib["language"].lower() != "ippcode21":
     throw_error(f"Input source file has unknown structure [1]", 32)
+
+# Redirect input file to stdin if provided
+if file_input:
+    sys.stdin = open(file_input, "r")
 
 # List of all parsed instructions
 instructions = []

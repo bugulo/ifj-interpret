@@ -224,11 +224,11 @@ for instruction_i, elem_instruction in enumerate(instruction_elements):
             throw_error(f"Input source file has unknown structure [6]", 32)
 
         arg_type = elem_arg.attrib["type"]
-        arg_text = elem_arg.text
+        arg_text = elem_arg.text if elem_arg.text != None else ""
 
         required = instruction_table[instruction.name][index]
 
-        if (required == ArgumentType.VAR or required == ArgumentType.SYMB) and arg_type == "var" and re.match(r"^(?:GF|LF|TF)\@[\w\_\-\$\&\%\*\!\?]+[\w\_\-\$\&\%\*\!\?]*$", arg_text) != None:
+        if (required == ArgumentType.VAR or required == ArgumentType.SYMB) and arg_type == "var" and re.match(r"^(GF|LF|TF)@[a-zA-Z_\-$&%*!?]+[a-zA-Z_\-$&%*!?0-9]*$", arg_text) != None:
             frame, name = arg_text.split("@", 1)
 
             frame_type = None
@@ -238,14 +238,12 @@ for instruction_i, elem_instruction in enumerate(instruction_elements):
                 frame_type = FrameType.LOCAL
             elif frame == "TF":
                 frame_type = FrameType.TEMPORARY
-
             instruction.arguments.append(Variable(frame_type, name))
-        elif required == ArgumentType.SYMB and arg_type == "string":
-            string = arg_text if arg_text != None else ""
-            for code in re.findall(r'\\\d\d\d', string):
-                string = string.replace(code, chr(int(code[1:])))
-            instruction.arguments.append(string)
-        elif required == ArgumentType.LABEL and arg_type == "label" and re.match(r"[\w\_\-\$\&\%\*\!\?]+[\w\_\-\$\&\%\*\!\?]*", arg_text) != None:
+        elif required == ArgumentType.SYMB and arg_type == "string" and re.match(r"^((\x5C[0-9]{3})|[^#\s\x5C])*$", arg_text):
+            for code in re.findall(r'\\\d\d\d', arg_text):
+                arg_text = arg_text.replace(code, chr(int(code[1:])))
+            instruction.arguments.append(arg_text)
+        elif required == ArgumentType.LABEL and arg_type == "label" and re.match(r"^[a-zA-Z_\-$&%*!?]+[a-zA-Z_\-$&%*!?0-9]*$", arg_text) != None:
             instruction.arguments.append(arg_text)
         elif required == ArgumentType.TYPE and arg_type == "type" and re.match(r"^(int|string|bool|float)$", arg_text) != None:
             if arg_text == "int":

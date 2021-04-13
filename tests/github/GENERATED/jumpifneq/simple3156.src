@@ -1,2 +1,0 @@
-.IPPcode21
-JUMPIFNEQ label int@42 bool@true

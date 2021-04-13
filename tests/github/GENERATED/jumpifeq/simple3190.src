@@ -1,2 +1,0 @@
-.IPPcode21
-JUMPIFEQ GF@var string@a label

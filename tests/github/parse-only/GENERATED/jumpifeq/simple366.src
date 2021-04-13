@@ -1,0 +1,2 @@
+.IPPcode21
+JUMPIFEQ string@a GF@var bool@true

@@ -163,11 +163,13 @@ foreach($files as $file) {
         "error" => false
     ];
 
+    //var_dump($test);
+
     // Return code that we expect to get
     $expected_rc = intval(file_get_contents("${file}.rc"));
 
     if($arguments["parse-only"] === true) {    
-        exec("php7.4 ${arguments["parse-script"]} < ${file}.src > testphp_tmp 2>&1", $output, $actual_rc);
+        exec("php7.4 ${arguments["parse-script"]} < ${file}.src > parse_tmp 2>&1", $output, $actual_rc);
 
         // Return codes do not match, either wrong parser implementation or incorrect return code in test file
         if($actual_rc != $expected_rc) {
@@ -178,14 +180,14 @@ foreach($files as $file) {
 
         // Parser returned some XML output, compare it to test output
         if($actual_rc == 0) {
-            exec("java -jar ${arguments["jexamxml"]} testphp_tmp ${file}.out /dev/null ${arguments["jexamcfg"]}", $output, $actual_rc);
+            exec("java -jar ${arguments["jexamxml"]} parse_tmp ${file}.out /dev/null ${arguments["jexamcfg"]}", $output, $actual_rc);
             
             // XML files are not the same
             if($actual_rc != 0)
                 $test["error"] = "Parser output xml file does not match the test one";
         }
     } else if($arguments["int-only"] === true) {
-        exec("python3.8 ${arguments["int-script"]} < ${file}.src > testphp_tmp 2>&1", $output, $actual_rc);
+        exec("python3.8 ${arguments["int-script"]} --source=${file}.src --input=${file}.in > interpret_tmp 2>&1", $output, $actual_rc);
 
         // Return codes do not match, either wrong interpret implementation or incorrect return code in test file
         if($actual_rc != $expected_rc) {
@@ -196,13 +198,13 @@ foreach($files as $file) {
 
         // Compare interpret output to test output
         if($actual_rc == 0) {
-            exec("diff testphp_tmp ${file}.out 2>&1", $output, $actual_rc);
+            exec("diff interpret_tmp ${file}.out 2>&1", $output, $actual_rc);
 
             if($actual_rc != 0)
                 $test["error"] = "Interpret output file does not match the test one";
         }
     } else {
-        exec("php7.4 ${arguments["parse-script"]} < ${file}.src > testphp_tmp 2>&1", $output, $actual_rc);
+        exec("php7.4 ${arguments["parse-script"]} < ${file}.src > parse_tmp 2>&1", $output, $actual_rc);
 
         // Return codes do not match, either wrong parser implementation or incorrect return code in test file
         if($actual_rc != 0 && $actual_rc != $expected_rc) {
@@ -210,7 +212,7 @@ foreach($files as $file) {
         }
 
         if($actual_rc == 0) {
-            exec("python3.8 ${arguments["int-script"]} < testphp_tmp > testphp_tmp 2>&1", $output, $actual_rc);
+            exec("python3.8 ${arguments["int-script"]} --source=parse_tmp --input=${file}.in > interpret_tmp 2>&1", $output, $actual_rc);
 
             // Return codes do not match, either wrong interpret implementation or incorrect return code in test file
             if($actual_rc != $expected_rc) {
@@ -219,19 +221,25 @@ foreach($files as $file) {
                 continue;
             }
 
-            // Compare interpret output to test output
-            exec("diff testphp_tmp ${file}.out 2>&1", $output, $actual_rc);
+            if($actual_rc == 0) {
+                // Compare interpret output to test output
+                exec("diff interpret_tmp ${file}.out 2>&1", $output, $actual_rc);
 
-            if($actual_rc != 0)
-                $test["error"] = "Interpret output file does not match the test one";
+                if($actual_rc != 0)
+                    $test["error"] = "Interpret output file does not match the test one";
+            }
         }
     }
 
     $tests[] = $test;
 }
 
-if(file_exists("testphp_tmp"))
-    unlink("testphp_tmp");
+// Remove temporary files if they exist
+if(file_exists("parse_tmp"))
+    unlink("parse_tmp");
+
+if(file_exists("interpret_tmp"))
+    unlink("interpret_tmp");
 
 sort($tests);
 

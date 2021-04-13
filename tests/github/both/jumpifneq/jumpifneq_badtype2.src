@@ -1,0 +1,7 @@
+.IPPcode21
+
+DEFVAR GF@a
+
+LABEL aaa
+
+JUMPIFNEQ aaa int@40 bool@true

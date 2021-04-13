@@ -1,0 +1,8 @@
+.IPPcode21
+
+DEFVAR GF@a
+
+CREATEFRAME
+PUSHFRAME
+
+IDIV GF@a int@40 LF@undefined

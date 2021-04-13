@@ -1,0 +1,5 @@
+.IPPcode21
+
+CREATEFRAME
+
+IDIV TF@undefined int@40 int@2

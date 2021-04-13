@@ -1,0 +1,3 @@
+.IPPcode21
+
+JUMPIFEQ aaa int@5 int@5

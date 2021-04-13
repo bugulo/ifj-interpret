@@ -1,0 +1,7 @@
+.IPPcode21
+
+CREATEFRAME
+
+LABEL aaa
+
+JUMPIFEQ aaa int@40 TF@undefined

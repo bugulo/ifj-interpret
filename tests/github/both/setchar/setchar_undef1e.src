@@ -1,0 +1,6 @@
+.IPPcode21
+
+CREATEFRAME
+PUSHFRAME
+
+SETCHAR LF@undefined int@1 string@X

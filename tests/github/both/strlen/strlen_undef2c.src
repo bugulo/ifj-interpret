@@ -1,0 +1,6 @@
+.IPPcode21
+
+CREATEFRAME
+PUSHFRAME
+
+STRLEN TF@a string@abc

@@ -1,0 +1,7 @@
+.IPPcode21
+
+DEFVAR GF@a
+
+CREATEFRAME
+
+OR GF@a TF@undefined bool@false

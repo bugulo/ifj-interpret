@@ -1,0 +1,8 @@
+.IPPcode21
+
+PUSHS string@ahoj
+
+CREATEFRAME
+
+POPS TF@undef
+

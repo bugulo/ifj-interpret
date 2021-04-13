@@ -1,0 +1,5 @@
+.IPPcode21
+
+CREATEFRAME
+
+MOVE TF@a string@abc
